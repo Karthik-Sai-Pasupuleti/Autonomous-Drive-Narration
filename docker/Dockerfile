@@ -9,11 +9,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     UV_NO_CACHE=1 \
     HF_HOME=/opt/hf \
     HF_HUB_OFFLINE=1 \
-    FASTRTPS_DEFAULT_PROFILES_FILE=/app/docker/fastdds_udp_only.xml \
+    RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
     PATH=/app/.venv/bin:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ros-humble-autoware-perception-msgs \
+      ros-humble-rmw-cyclonedds-cpp \
       ros-humble-vision-msgs \
       espeak-ng \
       alsa-utils \

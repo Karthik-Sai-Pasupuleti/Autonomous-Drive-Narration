@@ -1,0 +1,32 @@
+{
+  mode: "client",
+
+  connect: {
+    endpoints: ["tcp/192.168.9.100:7447"]
+  },
+
+  scouting: {
+    multicast: {
+      enabled: false
+    }  },
+
+  plugins: {
+    ros2dds: {
+      domain: 0,
+      allow: {
+        publishers: ["/narration"],
+        subscribers: [
+          "/mobile_pole/signal_car_approaching",
+          "/robot/signal_car_approaching",
+          "/drone/signal_car_approaching",
+
+          "/mobile_pole/axis_rgb_9_41/image_visualization_new/compressed",
+          "/mobile_pole/axis_rgb_9_41/autoware_objects_3d",
+
+          "/robot/image_annotated/compressed",
+          "/dji/image_annotated",
+        ],
+      }
+    }
+  }
+}

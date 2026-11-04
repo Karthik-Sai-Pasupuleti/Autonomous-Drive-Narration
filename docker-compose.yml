@@ -3,18 +3,22 @@ x-narration: &narration
   build:
     context: .
     dockerfile: docker/Dockerfile
+    network: host
   network_mode: host
   ipc: host
   environment:
+    ROS_DISTRO: humble  
     ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
     OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
     PULSE_SERVER: unix:/run/pulse/native
+    CYCLONEDDS_URI: /app/dds_config/cyclonedds.xml
   env_file:
     - path: .env
       required: false
   volumes:
     - ${XDG_RUNTIME_DIR:-/run/user/1000}/pulse/native:/run/pulse/native
     - ${HOME}/.config/pulse/cookie:/root/.config/pulse/cookie:ro
+    - ./dds_config/cyclonedds.xml:/app/dds_config/cyclonedds.xml
 
 services:
   narration:
@@ -24,14 +28,33 @@ services:
       model:=${MODEL:-minicpm-v4.5:latest}
       backend:=${TTS_BACKEND:-auto}
 
-  speaker:
-    <<: *narration
-    profiles: [manual]
-    command: python src/drive-narration/speaker_node.py --ros-args -p backend:=${TTS_BACKEND:-auto}
+  zenoh-bridge-ux-node:
+    image: eclipse/zenoh-bridge-ros2dds:latest
+    container_name: zenoh-bridge
+    network_mode: host
+    profiles: [bridge]
+    environment:
+      ROS_DISTRO: humble
+      ROS_DOMAIN_ID: "0"
+      ROS_LOCALHOST_ONLY: "0"
+      CYCLONEDDS_URI: /app/dds_config/cyclonedds.xml
+    volumes:
+      - ./dds_config/zenoh_bridge.json5:/config/zenoh_config.json5:ro
+      - ./dds_config/cyclonedds.xml:/app/dds_config/cyclonedds.xml
+    command:
+      - -c
+      - /config/zenoh_config.json5
+      - --rest-http-port
+      - "8000"
+    restart: unless-stopped
+  #speaker:
+  #  <<: *narration
+  #  profiles: [manual]
+  #  command: python src/drive-narration/speaker_node.py --ros-args -p backend:=${TTS_BACKEND:-auto}
 
-  text:
-    <<: *narration
-    profiles: [manual]
-    stdin_open: true
-    tty: true
-    command: python src/drive-narration/text_to_speaker_node.py
+  #text:
+  #  <<: *narration
+  #  profiles: [manual]
+  #  stdin_open: true
+  #  tty: true
+  #  command: python src/drive-narration/text_to_speaker_node.py
